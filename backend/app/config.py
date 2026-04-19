@@ -1,16 +1,28 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import List
+
+# Repo root is 4 levels above this file:
+# config.py → app/ → backend/ → wte-dashboard/ → repo-root/
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+
+# Primary path matches the Render deployment structure.
+# Local dev fallback includes the extra waste-data/ directory layer.
+_CSV_NAME = "cleaned_waste_output.csv"
+_RENDER_CSV = _REPO_ROOT / "10x-analyst-master" / "output" / "cleaned-data"    / _CSV_NAME
+_LOCAL_CSV  = _REPO_ROOT / "10x-analyst-master" / "output" / "waste-data" / "cleaned-data" / _CSV_NAME
+
+_DEFAULT_DATA_PATH = str(_RENDER_CSV if _RENDER_CSV.exists() else _LOCAL_CSV)
 
 
 class Settings(BaseSettings):
     app_name: str = "GreenGrid Urban Solutions — WTE Rotterdam"
     app_version: str = "2.0.0"
 
-    # Data
-    data_path: str = (
-        "../../10x-analyst-master/output/waste-data/"
-        "cleaned-data/cleaned_waste_output.csv"
-    )
+    # Data — absolute path derived from this file's location so it works
+    # regardless of CWD (locally, Docker, or Render).
+    # Override via DATA_PATH env var if needed.
+    data_path: str = _DEFAULT_DATA_PATH
 
     # Energy economics
     electricity_price_eur_mwh: float = 145.0
